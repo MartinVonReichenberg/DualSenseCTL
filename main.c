@@ -2,7 +2,7 @@
 /*
  *  HID driver for Sony DualSense(TM) controller.
  *
- *  Copyright (c) 2020 Sony Interactive Entertainment
+ *  Copyright (c) 2020-2023 Sony Interactive Entertainment
  */
 
 #include <unistd.h>
@@ -104,7 +104,7 @@ struct dualsense_touch_point {
     uint8_t y_hi;
 } __attribute__((packed));
 
-/* Main DualSense input report excluding any BT/USB specific headers. */
+/* Main DualSense input report excluding any Bluetooth/USB specific headers. */
 struct dualsense_input_report {
     uint8_t x, y;
     uint8_t rx, ry;
@@ -127,7 +127,7 @@ struct dualsense_input_report {
     uint8_t reserved4[10];
 } __attribute__((packed));
 
-/* Common data between DualSense BT/USB main output report. */
+/* Common data between DualSense Bluetooth/USB main output report. */
 struct dualsense_output_report_common {
     uint8_t valid_flag0;
     uint8_t valid_flag1;
@@ -390,7 +390,7 @@ static bool dualsense_bt_disconnect(struct dualsense *ds)
     DBusMessage *reply = dbus_connection_send_with_reply_and_block(conn, msg, -1, &err);
     dbus_message_unref(msg);
     if (dbus_error_is_set(&err)) {
-        fprintf(stderr, "Failed to enumerate BT devices: %s %s\n", err.name, err.message);
+        fprintf(stderr, "Failed to enumerate Bluetooth devices: %s %s\n", err.name, err.message);
         return false;
     }
     DBusMessageIter dict;
@@ -443,14 +443,14 @@ static bool dualsense_bt_disconnect(struct dualsense *ds)
     }
     dbus_message_unref(reply);
     if (!ds_path) {
-        fprintf(stderr, "Failed to find BT device\n");
+        fprintf(stderr, "Failed to find Bluetooth device\n");
         return false;
     }
     msg = dbus_message_new_method_call("org.bluez", ds_path, "org.bluez.Device1", "Disconnect");
     reply = dbus_connection_send_with_reply_and_block(conn, msg, -1, &err);
     dbus_message_unref(msg);
     if (dbus_error_is_set(&err)) {
-        fprintf(stderr, "Failed to disconnect BT device: %s %s\n", err.name, err.message);
+        fprintf(stderr, "Failed to disconnect Bluetooth device: %s %s\n", err.name, err.message);
         return false;
     }
     dbus_message_unref(reply);
@@ -461,7 +461,7 @@ static bool dualsense_bt_disconnect(struct dualsense *ds)
 static int command_power_off(struct dualsense *ds)
 {
     if (!ds->bt) {
-        fprintf(stderr, "Controller is not connected via BT\n");
+        fprintf(stderr, "Controller is not connected via Bluetooth\n");
         return 1;
     }
     if (!dualsense_bt_disconnect(ds)) {
@@ -509,25 +509,25 @@ static int command_battery(struct dualsense *ds)
          * 0 = 0-9%, 1 = 10-19%, .. and 10 = 100%
          */
         battery_capacity = min(battery_data * 10 + 5, 100);
-        battery_status = "discharging";
+        battery_status = "DISCHARGING";
         break;
     case 0x1:
         battery_capacity = min(battery_data * 10 + 5, 100);
-        battery_status = "charging";
+        battery_status = "CHARGING";
         break;
     case 0x2:
         battery_capacity = 100;
-        battery_status = "full";
+        battery_status = "FULL";
         break;
     case 0xa: /* voltage or temperature out of range */
     case 0xb: /* temperature error */
         battery_capacity = 0;
-        battery_status = "not-charging";
+        battery_status = "NOT-CHARGING";
         break;
     case 0xf: /* charging error */
     default:
         battery_capacity = 0;
-        battery_status = "unknown";
+        battery_status = "UNKNOWN";
     }
 #undef min
 
@@ -567,9 +567,9 @@ static int command_lightbar1(struct dualsense *ds, char *state)
     dualsense_init_output_report(ds, &rp, rbuf);
 
     rp.common->valid_flag2 = DS_OUTPUT_VALID_FLAG2_LIGHTBAR_SETUP_CONTROL_ENABLE;
-    if (!strcmp(state, "on")) {
+    if (!strcmp(state, "ON")) {
         rp.common->lightbar_setup = DS_OUTPUT_LIGHTBAR_SETUP_LIGHT_ON;
-    } else if (!strcmp(state, "off")) {
+    } else if (!strcmp(state, "OFF")) {
         rp.common->lightbar_setup = DS_OUTPUT_LIGHTBAR_SETUP_LIGHT_OUT;
     } else {
         fprintf(stderr, "Invalid state\n");
@@ -634,9 +634,9 @@ static int command_microphone(struct dualsense *ds, char *state)
     dualsense_init_output_report(ds, &rp, rbuf);
 
     rp.common->valid_flag1 = DS_OUTPUT_VALID_FLAG1_POWER_SAVE_CONTROL_ENABLE;
-    if (!strcmp(state, "on")) {
+    if (!strcmp(state, "ON")) {
         rp.common->power_save_control &= ~DS_OUTPUT_POWER_SAVE_CONTROL_MIC_MUTE;
-    } else if (!strcmp(state, "off")) {
+    } else if (!strcmp(state, "OFF")) {
         rp.common->power_save_control |= DS_OUTPUT_POWER_SAVE_CONTROL_MIC_MUTE;
     } else {
         fprintf(stderr, "Invalid state\n");
@@ -655,9 +655,9 @@ static int command_microphone_led(struct dualsense *ds, char *state)
     dualsense_init_output_report(ds, &rp, rbuf);
 
     rp.common->valid_flag1 = DS_OUTPUT_VALID_FLAG1_MIC_MUTE_LED_CONTROL_ENABLE;
-    if (!strcmp(state, "on")) {
+    if (!strcmp(state, "ON")) {
         rp.common->mute_button_led = 1;
-    } else if (!strcmp(state, "off")) {
+    } else if (!strcmp(state, "OFF")) {
         rp.common->mute_button_led = 0;
     } else {
         fprintf(stderr, "Invalid state\n");
@@ -685,13 +685,13 @@ static int command_speaker(struct dualsense *ds, char *state)
      * 2 L_L_R
      * 3 X_X_R
      */
-    if (!strcmp(state, "internal")) { /* right channel to speaker */
+    if (!strcmp(state, "INTERNAL")) { /* right channel to speaker */
         rp.common->audio_flags = 3 << DS_OUTPUT_AUDIO_OUTPUT_PATH_SHIFT;
-    } else if (!strcmp(state, "headphone")) { /* stereo channel to headphone */
+    } else if (!strcmp(state, "HEADPHONE")) { /* stereo channel to headphone */
         rp.common->audio_flags = 0;
-    } else if (!strcmp(state, "monoheadphone")) { /* left channel to headphone */
+    } else if (!strcmp(state, "MONOHEADPHONE")) { /* left channel to headphone */
         rp.common->audio_flags = 1 << DS_OUTPUT_AUDIO_OUTPUT_PATH_SHIFT;
-    } else if (!strcmp(state, "both")) { /* left channel to headphone, right channel to speaker */
+    } else if (!strcmp(state, "BOTH")) { /* left channel to headphone, right channel to speaker */
         rp.common->audio_flags = 2 << DS_OUTPUT_AUDIO_OUTPUT_PATH_SHIFT;
     } else {
         fprintf(stderr, "Invalid state\n");
@@ -749,10 +749,10 @@ static int command_trigger(struct dualsense *ds, char *trigger, uint8_t mode, ui
     uint8_t rbuf[DS_OUTPUT_REPORT_BT_SIZE];
     dualsense_init_output_report(ds, &rp, rbuf);
 
-    if (!strcmp(trigger, "right") || !strcmp(trigger, "both")) {
+    if (!strcmp(trigger, "RIGHT") || !strcmp(trigger, "BOTH")) {
         rp.common->valid_flag0 = DS_OUTPUT_VALID_FLAG0_RIGHT_TRIGGER_MOTOR_ENABLE;
     }
-    if (!strcmp(trigger, "left") || !strcmp(trigger, "both")) {
+    if (!strcmp(trigger, "LEFT") || !strcmp(trigger, "BOTH")) {
         rp.common->valid_flag0 |= DS_OUTPUT_VALID_FLAG0_LEFT_TRIGGER_MOTOR_ENABLE;
     }
 
@@ -794,7 +794,7 @@ static int trigger_bitpacking_array(struct dualsense *ds, char *trigger, uint8_t
     uint16_t active_zones = 0;
     for (int i = 0; i < 10; i++) {
         if (strength[i] > 8) {
-            fprintf(stderr, "strengths must be between 0 and 8\n");
+            fprintf(stderr, "Strengths must be between 0 and 8\n");
             return 1;
         }
         if (strength[i] > 0) {
@@ -818,11 +818,11 @@ static int trigger_bitpacking_array(struct dualsense *ds, char *trigger, uint8_t
 static int command_trigger_feedback(struct dualsense *ds, char *trigger, uint8_t position, uint8_t strength)
 {
     if (position > 9) {
-        fprintf(stderr, "position must be between 0 and 9\n");
+        fprintf(stderr, "Position must be between 0 and 9\n");
         return 1;
     }
     if (strength > 8 || !(strength > 0)) {
-        fprintf(stderr, "strength must be between 1 and 8\n");
+        fprintf(stderr, "Strength must be between 1 and 8\n");
         return 1;
     }
     uint8_t strength_array[10] = {0};
@@ -836,15 +836,15 @@ static int command_trigger_feedback(struct dualsense *ds, char *trigger, uint8_t
 static int command_trigger_weapon(struct dualsense *ds, char *trigger, uint8_t start_position, uint8_t end_position, uint8_t strength)
 {
     if (start_position > 7 || start_position < 2) {
-        fprintf(stderr, "start position must be between 2 and 7\n");
+        fprintf(stderr, "Start position must be between 2 and 7\n");
         return 1;
     }
     if (end_position > 8 || end_position < start_position+1) {
-        fprintf(stderr, "end position must be between start position+1 and 8\n");
+        fprintf(stderr, "End position must be between start position+1 and 8\n");
         return 1;
     }
     if (strength > 8 || !(strength > 0)) {
-        fprintf(stderr, "strength must be between 1 and 8\n");
+        fprintf(stderr, "Strength must be between 1 and 8\n");
         return 1;
     }
 
@@ -859,19 +859,19 @@ static int command_trigger_weapon(struct dualsense *ds, char *trigger, uint8_t s
 static int command_trigger_bow(struct dualsense *ds, char *trigger, uint8_t start_position, uint8_t end_position, uint8_t strength, uint8_t snap_force)
 {
     if (start_position > 8 || !(start_position > 0)) {
-        fprintf(stderr, "start position must be between 0 and 8\n");
+        fprintf(stderr, "Start position must be between 0 and 8\n");
         return 1;
     }
     if (end_position > 8 || end_position < start_position+1) {
-        fprintf(stderr, "end position must be between start position+1 and 8\n");
+        fprintf(stderr, "End position must be between start position+1 and 8\n");
         return 1;
     }
     if (strength > 8 || !(strength > 0)) {
-        fprintf(stderr, "strength must be between 1 and 8\n");
+        fprintf(stderr, "Strength must be between 1 and 8\n");
         return 1;
     }
     if (snap_force > 8 || !(snap_force > 0)) {
-        fprintf(stderr, "snap_force must be between 1 and 8\n");
+        fprintf(stderr, "SNAP_FORCE must be between 1 and 8\n");
         return 1;
     }
 
@@ -887,28 +887,28 @@ static int command_trigger_bow(struct dualsense *ds, char *trigger, uint8_t star
 static int command_trigger_galloping(struct dualsense *ds, char *trigger, uint8_t start_position, uint8_t end_position, uint8_t first_foot, uint8_t second_foot, uint8_t frequency)
 {
     if (start_position > 8) {
-        fprintf(stderr, "start position must be between 0 and 8\n");
+        fprintf(stderr, "Start position must be between 0 and 8\n");
         return 1;
     }
     if (end_position > 9 || end_position < start_position+1) {
-        fprintf(stderr, "end position must be between start position+1 and 9\n");
+        fprintf(stderr, "End position must be between start position+1 and 9\n");
         return 1;
     }
     if (first_foot > 6) {
-        fprintf(stderr, "first_foot must be between 0 and 8\n");
+        fprintf(stderr, "FIRST_FOOT must be between 0 and 8\n");
         return 1;
     }
     if (second_foot > 7 || second_foot < first_foot+1) {
-        fprintf(stderr, "second_foot must be between first_foot+1 and 8\n");
+        fprintf(stderr, "SECOND_FOOT must be between first_foot+1 and 8\n");
         return 1;
     }
 
     if (!(frequency > 0)) {
-        fprintf(stderr, "frequency must be greater than 0\n");
+        fprintf(stderr, "Frequency must be greater than 0\n");
         return 1;
     }
     if (frequency > 8) {
-        fprintf(stdout, "frequency has a better effect when lower than 8\n");
+        fprintf(stdout, "Frequency has a better effect when lower than 8\n");
     }
     uint16_t start_stop_zones = (uint16_t)((1 << start_position) | (1 << end_position));
     uint32_t ratio =  (uint16_t)((second_foot & 0x07) | ((first_foot & 0x07) << 3 ));
@@ -924,23 +924,23 @@ static int command_trigger_machine(struct dualsense *ds, char *trigger, uint8_t 
 {
     // if start_position == 0 nothing happen
     if (start_position > 8 || !(start_position > 0)) {
-        fprintf(stderr, "start position must be between 1 and 8\n");
+        fprintf(stderr, "Start position must be between 1 and 8\n");
         return 1;
     }
     if (end_position > 9 || end_position < start_position+1) {
-        fprintf(stderr, "end position must be between start position+1 and 9\n");
+        fprintf(stderr, "End position must be between start position+1 and 9\n");
         return 1;
     }
     if (strength_a > 7) {
-        fprintf(stderr, "strength_a position must be between 0 and 7\n");
+        fprintf(stderr, "STRENGHT_A position must be between 0 and 7\n");
         return 1;
     }
     if (strength_b > 7) {
-        fprintf(stderr, "strength_b position must be between 0 and 7\n");
+        fprintf(stderr, "STRENGHT_B position must be between 0 and 7\n");
         return 1;
     }
     if (!(frequency > 0)) {
-        fprintf(stderr, "frequency must be greater than 0\n");
+        fprintf(stderr, "Frequency must be greater than 0\n");
         return 1;
     }
     uint16_t start_stop_zones = (uint16_t)((1 << start_position) | (1 << end_position));
@@ -957,15 +957,15 @@ static int command_trigger_machine(struct dualsense *ds, char *trigger, uint8_t 
 static int command_trigger_vibration(struct dualsense *ds, char *trigger, uint8_t position, uint8_t amplitude, uint8_t frequency)
 {
     if (position > 9) {
-        fprintf(stderr, "position must be between 0 and 9\n");
+        fprintf(stderr, "Position must be between 0 and 9\n");
         return 1;
     }
     if (amplitude > 8 || !(amplitude > 0)) {
-        fprintf(stderr, "amplitude must be between 1 and 8\n");
+        fprintf(stderr, "Amplitude must be between 1 and 8\n");
         return 1;
     }
     if (!(frequency > 0)) {
-        fprintf(stderr, "frequency must be greater than 0\n");
+        fprintf(stderr, "Frequency must be greater than 0\n");
         return 1;
     }
 
@@ -1141,45 +1141,37 @@ static int command_monitor(void)
 
 static void print_help(void)
 {
-    printf("Usage: dualsensectl [options] command [ARGS]\n");
+    printf("Usage: dualsensectl [--option] [command] [ARGUMENT/S] ([command]) [PARAMETER/S]\n");
     printf("\n");
     printf("Options:\n");
-    printf("  -l                                       List available devices\n");
-    printf("  -d DEVICE                                Specify which device to use\n");
-    printf("  -w                                       Wait for shell command to complete (monitor only)\n");
-    printf("  -h --help                                Show this help message\n");
-    printf("  -v --version                             Show version\n");
+    printf("  -l --list                                                                                List connected devices [xx:xx:xx:xx:xx:xx] (USB/Bluetooth)\n");
+    printf("  -d --device [DEVICE]                                                                     Specify which device to use [xx:xx:xx:xx:xx:xx] (USB/Bluetooth) and show help message\n");
+    printf("  -w --wait                                                                                Wait for shell command to complete (Monitor only)\n");
+    printf("  -h --help                                                                                Show this help message and exit\n");
+    printf("  -v --version                                                                             Show version and exit\n");
     printf("Commands:\n");
-    printf("  power-off                                Turn off the controller (BT only)\n");
-    printf("  battery                                  Get the controller battery level\n");
-    printf("  info                                     Get the controller firmware info\n");
-    printf("  lightbar STATE                           Enable (on) or disable (off) lightbar\n");
-    printf("  lightbar RED GREEN BLUE [BRIGHTNESS]     Set lightbar color and brightness (0-255)\n");
-    printf("  player-leds NUMBER                       Set player LEDs (1-5) or disabled (0)\n");
-    printf("  microphone STATE                         Enable (on) or disable (off) microphone\n");
-    printf("  microphone-led STATE                     Enable (on) or disable (off) microphone LED\n");
-    printf("  speaker STATE                            Toggle to 'internal' speaker, 'headphone' or both\n");
-    printf("  volume VOLUME                            Set audio volume (0-255) of internal speaker and headphone\n");
-    printf("  attenuation RUMBLE TRIGGER               Set the attenuation (0-7) of rumble/haptic motors and trigger vibration\n");
-    printf("  trigger TRIGGER off                      remove all effects\n");
-    printf("  trigger TRIGGER feedback POSITION STRENGTH\n\
-                                           set a resistance starting at position with a defined strength\n");
-    printf("  trigger TRIGGER weapon START STOP STRENGTH\n\
-                                           Emulate weapon like gun trigger\n");
-    printf("  trigger TRIGGER bow START STOP STRENGTH SNAPFORCE\n\
-                                           Emulate weapon like bow\n");
-    printf("  trigger TRIGGER galloping START STOP FIRST_FOOT SECOND_FOOT FREQUENCY\n\
-                                           Emulate a galloping\n");
-    printf("  trigger TRIGGER machine START STOP STRENGTH_A STRENGTH_B FREQUENCY PERIOD\n\
-                                           Switch vibration between to strength at a specified period\n");
-    printf("  trigger TRIGGER vibration POSITION AMPLITUDE FREQUENCY \n\
-                                           Vibrates motor arm around specified position\n");
-    printf("  trigger TRIGGER feedback-raw STRENGTH[10]\n\
-                                           set a resistance starting using array of strength\n");
-    printf("  trigger TRIGGER vibration-raw AMPLITUDE[10] FREQUENCY\n\
-                                           Vibrates motor arm at position and strength specified by an array of amplitude\n");
-    printf("  trigger TRIGGER MODE [PARAMS]            set the trigger (left, right or both) mode with parameters (up to 9)\n");
-    printf("  monitor [add COMMAND] [remove COMMAND]   Run shell command COMMAND on add/remove events\n");
+    printf("  power-off                                                                                Turn off the controller (Bluetooth only)\n");
+    printf("  battery                                                                                  Get the controller battery level and charging/discharging information\n");
+    printf("  info                                                                                     Get the controller firmware information\n");
+    printf("  lightbar [STATE]                                                                         Enable [ON] or disable [OFF] lightbar\n");
+    printf("  lightbar [RED] [GREEN] [BLUE] [BRIGHTNESS]                                               Set lightbar color and brightness [0-255] [0-255] [0-255] [0-255]\n");
+    printf("  player-leds [NUMBER]                                                                     Set player LEDs [1-5] or disabled [0]\n");
+    printf("  microphone [STATE]                                                                       Enable [ON] or disable [OFF] microphone\n");
+    printf("  microphone-led [STATE]                                                                   Enable [ON] or disable [OFF] microphone orange LED\n");
+    printf("  speaker [STATE]                                                                          Toggle to '[INTERNAL] speaker', [HEADPHONE], [MONOHEADPHONE] or [BOTH] outputs\n");
+    printf("  volume [VOLUME]                                                                          Set audio volume [0-255] of internal speaker and headphone\n");
+    printf("  attenuation [RUMBLE] [TRIGGER]                                                           Set the attenuation [0-7] [0-7] of rumble/haptic motors and trigger vibration\n");
+    printf("  trigger [TRIGGER] off                                                                    Remove all trigger [LEFT], [RIGHT] or [BOTH] effects\n");
+    printf("  trigger [TRIGGER] feedback [POSITION] [STRENGTH]                                         Set trigger(s) [LEFT], [RIGHT] or [BOTH] 'feedback'/'resistance' starting at position with a defined strength\n");
+    printf("  trigger [TRIGGER] weapon [START] [STOP] [STRENGTH]                                       Emulate trigger(s) [LEFT], [RIGHT] or [BOTH] as weapon like 'gun trigger'\n");
+    printf("  trigger [TRIGGER] bow [START] [STOP] [STRENGTH] [SNAP_FORCE]                             Emulate trigger(s) [LEFT], [RIGHT] or [BOTH] as weapon like 'bow'\n");
+    printf("  trigger [TRIGGER] galloping [START] [STOP] [FIRST_FOOT] [SECOND_FOOT] [FREQUENCY]        Emulate trigger [LEFT], [RIGHT] or [BOTH] 'galloping'\n");
+    printf("  trigger [TRIGGER] machine [START] [STOP] [STRENGTH_A] [STRENGTH_B] [FREQUENCY] [PERIOD]  Switch trigger [LEFT], [RIGHT] or [BOTH] vibration between to strength at a specified period\n");
+    printf("  trigger [TRIGGER] vibration [POSITION] [AMPLITUDE] [FREQUENCY]                           Vibrates trigger [LEFT], [RIGHT] or [BOTH] motor arm around specified position\n");
+    printf("  trigger [TRIGGER] feedback-raw [STRENGTH(10)]                                            Set trigger [LEFT], [RIGHT] or [BOTH] 'feedback'/'resistance' starting using array of strength (Requires 10 parameters)\n");
+    printf("  trigger [TRIGGER] vibration-raw [AMPLITUDE(10)] [FREQUENCY]                              Vibrates trigger [LEFT], [RIGHT] or [BOTH] motor arm at position and strength specified by an array of amplitude (Requires 10 parameters)\n");
+    printf("  trigger [TRIGGER] mode (1-9) [PARAMETERS]                                                Set the trigger [LEFT], [RIGHT] or [BOTH] mode with parameters (up to 9)\n");
+    printf("  monitor [add 'command'] / [remove 'command']                                             Run Monitor shell [add/remove 'command'] on add/remove events\n");
 }
 
 static void print_version(void)
@@ -1218,13 +1210,13 @@ int main(int argc, char *argv[])
     } else if (!strcmp(argv[1], "-v") || !strcmp(argv[1], "--version")) {
         print_version();
         return 0;
-    } else if (!strcmp(argv[1], "-l")) {
+    } else if (!strcmp(argv[1], "-l") || !strcmp(argv[1], "--list")) {
         return list_devices();
     } else if (!strcmp(argv[1], "monitor")) {
         argc -= 2;
         argv += 2;
         while (argc) {
-            if (!strcmp(argv[0], "-w")) {
+            if (!strcmp(argv[0], "-w") || !strcmp(argv[0], "--wait")) {
                 sh_command_wait = true;
             } else if (!strcmp(argv[0], "add")) {
                 if (argc < 2) {
@@ -1247,7 +1239,7 @@ int main(int argc, char *argv[])
             argv += 1;
         }
         return command_monitor();
-    } else if (!strcmp(argv[1], "-d")) {
+    } else if (!strcmp(argv[1], "-d") || !strcmp(argv[1], "--device")) {
         if (argc < 3) {
             print_help();
             return 1;
@@ -1257,7 +1249,7 @@ int main(int argc, char *argv[])
         argv += 2;
     }
 
-    if (argc < 2) {
+   if (argc < 2) {
         print_help();
         return 1;
     }
@@ -1336,50 +1328,50 @@ int main(int argc, char *argv[])
             return command_trigger_off(&ds, argv[2]);
         } else if (!strcmp(argv[3], "feedback")) {
             if (argc < 6) {
-                fprintf(stderr, "feedback mode need two parameters\n");
+                fprintf(stderr, "Feedback mode needs two parameters\n");
                 return 2;
             }
             return command_trigger_feedback(&ds, argv[2], atoi(argv[4]), atoi(argv[5]));
         } else if (!strcmp(argv[3], "weapon")) {
             if (argc < 7) {
-                fprintf(stderr, "weapons mode need three parameters\n");
+                fprintf(stderr, "Weapons mode needs three parameters\n");
                 return 2;
             }
             return command_trigger_weapon(&ds, argv[2], atoi(argv[4]), atoi(argv[5]), atoi(argv[6]));
         } else if (!strcmp(argv[3], "bow")) {
             if (argc < 8) {
-                fprintf(stderr, "bow mode need four parameters\n");
+                fprintf(stderr, "Bow mode needs four parameters\n");
                 return 2;
             }
             return command_trigger_bow(&ds, argv[2], atoi(argv[4]), atoi(argv[5]), atoi(argv[6]), atoi(argv[7]));
         } else if (!strcmp(argv[3], "galloping")) {
             if (argc < 9) {
-                fprintf(stderr, "galloping mode need five parameters\n");
+                fprintf(stderr, "Galloping mode needs five parameters\n");
                 return 2;
             }
             return command_trigger_galloping(&ds, argv[2], atoi(argv[4]), atoi(argv[5]), atoi(argv[6]), atoi(argv[7]), atoi(argv[8]));
         } else if (!strcmp(argv[3], "machine")) {
             if (argc < 10) {
-                fprintf(stderr, "machine mode need six parameters\n");
+                fprintf(stderr, "Machine mode needs six parameters\n");
                 return 2;
             }
             return command_trigger_machine(&ds, argv[2], atoi(argv[4]), atoi(argv[5]), atoi(argv[6]), atoi(argv[7]), atoi(argv[8]), atoi(argv[9]));
         } else if (!strcmp(argv[3], "vibration")) {
             if (argc < 7) {
-                fprintf(stderr, "vibration mode need three parameters\n");
+                fprintf(stderr, "Vibration mode needs three parameters\n");
                 return 2;
             }
             return command_trigger_vibration(&ds, argv[2], atoi(argv[4]), atoi(argv[5]), atoi(argv[6]));
         } else if (!strcmp(argv[3], "feedback-raw")) {
             if (argc < 14) {
-                fprintf(stderr, "feedback-raw mode need ten parameters\n");
+                fprintf(stderr, "Feedback-raw mode needs ten parameters\n");
                 return 2;
             }
             uint8_t strengths[10] = { atoi(argv[4]), atoi(argv[5]), atoi(argv[6]), atoi(argv[7]), atoi(argv[8]), atoi(argv[9]), atoi(argv[10]), atoi(argv[11]), atoi(argv[12]), atoi(argv[13]) };
             return command_trigger_feedback_raw(&ds, argv[2], strengths);
         } else if (!strcmp(argv[3], "vibration-raw")) {
             if (argc < 15) {
-                fprintf(stderr, "vibration-raw mode need eleven parameters\n");
+                fprintf(stderr, "Vibration-raw mode needs eleven parameters\n");
                 return 2;
             }
             uint8_t strengths[10] = { atoi(argv[4]), atoi(argv[5]), atoi(argv[6]), atoi(argv[7]), atoi(argv[8]), atoi(argv[9]), atoi(argv[10]), atoi(argv[11]), atoi(argv[12]), atoi(argv[13]) };
