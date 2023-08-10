@@ -1,0 +1,27 @@
+complete -c dualsensectl -s l -l list -d 'Print connected devices'
+complete -c dualsensectl -s d -l device -d 'Specify which device to use'
+complete -c dualsensectl -s w -l wait -d 'Waiting Monitor shell command for events'
+complete -c dualsensectl -s h -l help -d 'Print help text'
+complete -c dualsensectl -s v -l version -d 'Print version number'
+complete -c 'dualsensectl power-off' -d 'Turn off the controller (Bluetooth only)'
+complete -c 'dualsensectl battery' -d 'Get the controller battery level and charging/discharging information'
+complete -c 'dualsensectl info' -d 'Get the controller firmware information'
+complete -c 'dualsensectl lightbar' -a -r 'ON OFF' -d 'Enable [ON] or disable [OFF] lightbar [STATE]'
+complete -c 'dualsensectl lightbar' -a -r '(seq 0 255)' -d 'Set lightbar color and brightness [RED] [GREEN] [BLUE] [BRIGHTNESS] - [0-255] [0-255] [0-255] [0-255]'
+complete -c 'dualsensectl player-leds' -a -r '(seq 0 5)' -d Set player LEDs [1-5] or disabled [0]
+complete -c 'dualsensectl microphone' -a -r 'ON OFF' -d 'Enable [ON] or disable [OFF] microphone'
+complete -c 'dualsensectl microphone-led' -r 'ON OFF' -d 'Enable [ON] or disable [OFF] microphone orange LED'
+complete -c 'dualsensectl speaker' -a -r 'INTERNAL HEADPHONE MONOHEADPHONE BOTH' -d 'Toggle to [INTERNAL] speaker, [HEADPHONE], [MONOHEADPHONE] or [BOTH] outputs'
+complete -c 'dualsensectl volume' -a -r '(seq 0 255)' -d 'Set audio volume [0-255] of internal speaker and headphone'
+complete -c 'dualsensectl attenuation' -a -r 'LEFT RIGHT BOTH' -a -r '(seq 0 7) (seq 0 7)' -d 'Set the attenuation [0-7] [0-7] of rumble/haptic motors and trigger vibration'
+complete -c 'dualsensectl trigger' -a -r 'LEFT RIGHT BOTH' --subcommand off -d 'Remove all trigger [LEFT], [RIGHT] or [BOTH] effects'
+complete -c 'dualsensectl trigger' -a -r 'LEFT RIGHT BOTH' --subcommand feedback -d "Set trigger(s) [LEFT], [RIGHT] or [BOTH] 'feedback'/'resistance' starting at position with a defined strength"
+complete -c 'dualsensectl trigger' -a -r 'LEFT RIGHT BOTH' --subcommand weapon -d "Emulate trigger(s) [LEFT], [RIGHT] or [BOTH] as weapon like 'gun trigger'"
+complete -c 'dualsensectl trigger' -a -r 'LEFT RIGHT BOTH' --subcommand bow -d "Emulate trigger(s) [LEFT], [RIGHT] or [BOTH] as weapon like 'bow'"
+complete -c 'dualsensectl trigger' -a -r 'LEFT RIGHT BOTH' --subcommand galloping -d "Emulate trigger [LEFT], [RIGHT] or [BOTH] 'galloping'"
+complete -c 'dualsensectl trigger' -a -r 'LEFT RIGHT BOTH' --subcommand machine -d 'Switch trigger [LEFT], [RIGHT] or [BOTH] vibration between to strength at a specified period'
+complete -c 'dualsensectl trigger' -a -r 'LEFT RIGHT BOTH' --subcommand vibration -d 'Vibrates trigger [LEFT], [RIGHT] or [BOTH] motor arm around specified position'
+complete -c 'dualsensectl trigger' -a -r 'LEFT RIGHT BOTH' --subcommand feedback-raw -d "Set trigger [LEFT], [RIGHT] or [BOTH] 'feedback'/'resistance' starting using array of strength (Requires 10 parameters)"
+complete -c 'dualsensectl trigger' -a -r 'LEFT RIGHT BOTH' --subcommand vibration-raw -d 'Vibrates trigger [LEFT], [RIGHT] or [BOTH] motor arm at position and strength specified by an array of amplitude (Requires 10 parameters)'
+complete -c 'dualsensectl trigger' -a -r 'LEFT RIGHT BOTH' --subcommand mode -a -r (seq 0 9) -d 'Set the trigger [LEFT], [RIGHT] or [BOTH] mode with parameters (up to 9)'
+complete -c 'dualsensectl monitor' -a -r 'add\ command remove\ command' -d "Run Monitor shell [add/remove 'command'] on add/remove events"

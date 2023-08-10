@@ -1,0 +1,37 @@
+#compdef dualsensectl
+
+(( $+functions[_dualsensectl_commands] )) ||
+_dualsensectl_commands(){
+    local -a _dualsensectl_cmds
+
+    _dualsensectl_cmds=(
+        'power-off:turn off the controller'
+        'battery:get the controller battery level'
+        'info:Get the controller firmware info'
+        'lightbar:control the lightbar'
+        'player-leds:control the player LEDs'
+        'microphone:enable or disable microphone'
+        'microphone-led:control the microphone LED'
+        'speaker:control the sound output'
+        'volume:control the volume'
+        'attenuation: control vibration attenuation'
+        'trigger:control trigger force feedback'
+        )
+
+    if ((CURRENT == 1)); then
+        _describe -t commands 'dualsensectl commands' _dualsensectl_cmds
+    fi
+}
+
+_arguments \
+    '-l[Print connected devices]'\
+    '-d[Specify which device to use]'\
+    '-w[Waiting Monitor shell command for events]'\
+    '-h[Print help text]'\
+    '-v[Print version number]' \
+    '--list[Print connected devices]'\
+    '--device[Specify which device to use]'\
+    '--wait[Waiting Monitor shell command for events]'\
+    '--help[Print help text]'\
+    '--version[c]' \
+    '*::dualsensectl commands:_dualsensectl_commands'
