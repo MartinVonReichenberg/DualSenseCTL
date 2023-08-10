@@ -22,7 +22,7 @@ Release:        0
 Summary:        Tool for controlling PlayStation 5 DualSense controllers on Linux
 License:        GPL-2.0
 URL:            https://github.com/nowrep/dualsensectl
-Source0:        https://github.com/MartinVonReichenberg/%{name}/archive/refs/tags/v%{version}.tar.gz#%{name}-%{version}.tar.gz
+Source0:        %{name}-%{version}.tar.gz
 BuildRequires:  gcc-devel gcc-c++ dbus-1-devel libdbus-c++-devel systemd-devel
 BuildRequires:  libhidapi-devel libudev-devel
 Requires:       gcc gcc-c++ dbus-1
@@ -46,8 +46,8 @@ controllers on Linux.
 %{_bindir}/%{name}
 %{_datadir}/bash-completion/completions/dualsensectl
 %{_datadir}/zsh/site-functions/_dualsensectl
-%{_datadir}/fish/completions/dualsense.fish
-%{_sysconfdir}rules/70-dualsensectl.rules
+%{_datadir}/fish/completions/dualsensectl.fish
+%{_sysconfdir}/udev/rules.d/70-dualsensectl.rules
 %license LICENSE
 %doc README.md
 
